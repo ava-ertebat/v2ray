@@ -20,14 +20,14 @@ Automated Script for Installing and Configuring V2Ray on Multiple Servers
 نصب V2Ray با استفاده از پنل علیرضا.
 این اسکریپت خطاهای احتمالی را به خوبی مدیریت می‌کند، آن‌ها را برای بررسی ثبت می‌کند و راهی ساده برای مدیریت استقرارهای گسترده V2Ray فراهم می‌آورد.
 
-## نصب پیش نیاز ها
+# نصب پیش نیاز ها
 
 ```sh
 sudo apt update && apt install curl socat -y
 ```
 
 
-## شروع فرایند نصب
+# شروع فرایند نصب
 
 ```sh
 bash <(curl -Ls https://raw.githubusercontent.com/ava-ertebat/v2ray/master/install.sh)
