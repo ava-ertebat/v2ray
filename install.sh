@@ -1,17 +1,25 @@
 #!/bin/bash
 
 # دریافت نام کاربری، رمز عبور و ایمیل از کاربر
-read -p "Enter your SSH username: " ssh_user
-read -s -p "Enter your SSH password: " ssh_pass
+read -p "نام کاربری سرور خود را وارد کنید: " ssh_user
+read -s -p "رمز عبور سرور خود را وارد کنید: " ssh_pass
 echo
-read -p "Enter your email for SSL certificate: " email
-read -p "Enter the domain names of servers (space-separated): " servers
+read -p "آدرس ایمیل خود را برای دریافت گواهی اس اس ال وارد کنید: " email
+read -p "لیست دامنه یا دامنه های خود را وارد کنید (بعد از وارد کردن هر دامنه یک فاصله قرار دهید): " servers
 
 # انتخاب عملیات
-echo "What do you want to do?"
-echo "1) Renew SSL"
-echo "2) Install V2Ray"
-read -p "Choose an option (1 or 2): " action
+echo "میخوای واست چیکار کنم؟"
+echo "1) تمدید سریع SSL"
+echo "2) نصب V2Ray"
+read -p "یک عدد را  وارد کنید (1 or 2): " action
+
+# اگر گزینه نصب V2Ray انتخاب شد، انتخاب پنل مورد نظر
+if [ "$action" == "2" ]; then
+    echo "کدام پنل را میخواهید نصب کنید؟"
+    echo "1) پنل علیرضا"
+    echo "2) پنل صنایی"
+    read -p "یک عدد را  وارد کنید (1 or 2): " panel_choice
+fi
 
 # متغیر برای ذخیره خطاها
 error_log=""
@@ -20,35 +28,48 @@ error_log=""
 for server in $servers
 do
     if [ "$action" == "1" ]; then
-        echo "Renewing SSL for $server"
+        echo "تمدید SSL برای $server"
         sshpass -p "$ssh_pass" ssh -o StrictHostKeyChecking=no $ssh_user@$server "
             ~/.acme.sh/acme.sh --issue -d $server --standalone --force &&
             ~/.acme.sh/acme.sh --installcert -d $server --key-file /root/private.key --fullchain-file /root/cert.crt
         " || error_log+="Failed to renew SSL for $server\n"
     
     elif [ "$action" == "2" ]; then
-        echo "Installing V2Ray on $server"
-        sshpass -p "$ssh_pass" ssh -o StrictHostKeyChecking=no $ssh_user@$server "
-            apt update &&
-            apt upgrade -y &&
-            apt install curl socat -y &&
-            curl https://get.acme.sh | sh &&
-            ~/.acme.sh/acme.sh --set-default-ca --server letsencrypt &&
-            ~/.acme.sh/acme.sh --register-account -m $email &&
-            ~/.acme.sh/acme.sh --issue -d $server --standalone &&
-            ~/.acme.sh/acme.sh --installcert -d $server --key-file /root/private.key --fullchain-file /root/cert.crt &&
-            bash <(curl -Ls https://raw.githubusercontent.com/alireza0/x-ui/master/install.sh)
-        " || error_log+="Failed to install V2Ray on $server\n"
+        if [ "$panel_choice" == "1" ]; then
+            echo "در حال نصب پنل علیرضا در سرور $server"
+            sshpass -p "$ssh_pass" ssh -o StrictHostKeyChecking=no $ssh_user@$server "
+                curl https://get.acme.sh | sh &&
+                ~/.acme.sh/acme.sh --set-default-ca --server letsencrypt &&
+                ~/.acme.sh/acme.sh --register-account -m $email &&
+                ~/.acme.sh/acme.sh --issue -d $server --standalone &&
+                ~/.acme.sh/acme.sh --installcert -d $server --key-file /root/private.key --fullchain-file /root/cert.crt &&
+                bash <(curl -Ls https://raw.githubusercontent.com/alireza0/x-ui/master/install.sh)
+            " || error_log+="Failed to install Alireza's V2Ray Panel on $server\n"
+        
+        elif [ "$panel_choice" == "2" ]; then
+            echo "در حال نصب پنل صنایی در سرور $server"
+            sshpass -p "$ssh_pass" ssh -o StrictHostKeyChecking=no $ssh_user@$server "
+                curl https://get.acme.sh | sh &&
+                ~/.acme.sh/acme.sh --set-default-ca --server letsencrypt &&
+                ~/.acme.sh/acme.sh --register-account -m $email &&
+                ~/.acme.sh/acme.sh --issue -d $server --standalone &&
+                ~/.acme.sh/acme.sh --installcert -d $server --key-file /root/private.key --fullchain-file /root/cert.crt &&
+                bash <(curl -Ls https://raw.githubusercontent.com/mhsanaei/3x-ui/master/install.sh) v2.3.13
+            " || error_log+="Failed to install Sanaei's V2Ray Panel on $server\n"
+        else
+            echo "خطا در انتخاب پنل!"
+            exit 1
+        fi
     else
-        echo "Invalid option selected!"
+        echo "در خواست شما معتبر نیست!"
         exit 1
     fi
 done
 
 # نمایش خطاها در پایان
 if [ -n "$error_log" ]; then
-    echo -e "\nThe following errors occurred during execution:"
+    echo -e "\nThe خطا های دریافتی هنگام نصب:"
     echo -e "$error_log"
 else
-    echo "All tasks completed successfully without any errors!"
+    echo "نصب با موفقیت و بدون خطا انجام شد!"
 fi
