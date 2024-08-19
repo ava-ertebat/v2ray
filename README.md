@@ -19,7 +19,15 @@ Automated Script for Installing and Configuring V2Ray on Multiple Servers
 صدور و نصب گواهی SSL برای دامنه سرور.
 نصب V2Ray با استفاده از پنل علیرضا.
 این اسکریپت خطاهای احتمالی را به خوبی مدیریت می‌کند، آن‌ها را برای بررسی ثبت می‌کند و راهی ساده برای مدیریت استقرارهای گسترده V2Ray فراهم می‌آورد.
-## نصب
+
+## نصب پیش نیاز ها
+
+```sh
+apt update && apt install curl socat -y
+```
+
+
+## شروع فرایند نصب
 
 ```sh
 bash <(curl -Ls https://raw.githubusercontent.com/ava-ertebat/v2ray/master/install.sh)
