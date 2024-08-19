@@ -13,19 +13,29 @@ read -p "آدرس ایمیل خود را برای دریافت گواهی SSL و
 
 echo
 read -p "لیست دامنه یا دامنه های خود را وارد کنید (بعد از وارد کردن هر دامنه یک فاصله قرار دهید): " servers
-
+echo
 # انتخاب عملیات
 echo
 echo "میخوای واست چیکار کنم؟"
+echo
+echo
 echo "1) تمدید سریع SSL"
+echo
+echo
 echo "2) نصب V2Ray"
+echo
+echo
 read -p "یک عدد را وارد کنید (1 یا 2): " action
-
+echo
 # اگر گزینه نصب V2Ray انتخاب شد، انتخاب پنل مورد نظر
 if [ "$action" == "2" ]; then
     echo
     echo "کدام پنل را میخواهید نصب کنید؟"
+    echo
+    echo
     echo "1) پنل علیرضا"
+    echo
+    echo
     echo "2) پنل صنایی"
     read -p "یک عدد را وارد کنید (1 یا 2): " panel_choice
 fi
