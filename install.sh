@@ -26,9 +26,9 @@ print_number() {
 clear
 
 # خوشامدگویی
-center_text "${BOLD}${GREEN}    سلام من امید آخرتی هستم و در این اسکریپت تلاش کردم فرایند نصب پنل V2ray رو برای شما عزیزان هوشمند و ساده بکنم    ${RESET}"
+center_text "${BOLD}${GREEN}سلام من امید آخرتی هستم و در این اسکریپت تلاش کردم فرایند نصب پنل V2ray رو برای شما عزیزان هوشمند و ساده بکنم${RESET}"
 echo
-center_text "${BOLD}${GREEN}    اگر سوال یا کمکی از من بر میومد خوشحال میشم کمک بکنم    ${RESET}"
+center_text "${BOLD}${GREEN}اگر سوال یا کمکی از من بر میومد خوشحال میشم کمک بکنم${RESET}"
 echo
 
 # شماره تماس و همراه
@@ -111,24 +111,14 @@ do
             echo
             echo "در حال نصب پنل علیرضا در سرور $server"
             result=$(sshpass -p "$ssh_pass" ssh -o StrictHostKeyChecking=no $ssh_user@$server "
-                curl https://get.acme.sh | sh &&
-                ~/.acme.sh/acme.sh --set-default-ca --server letsencrypt &&
-                ~/.acme.sh/acme.sh --register-account -m $email &&
-                ~/.acme.sh/acme.sh --issue -d $server --standalone &&
-                ~/.acme.sh/acme.sh --installcert -d $server --key-file /root/private.key --fullchain-file /root/cert.crt &&
-                bash <(curl -Ls https://raw.githubusercontent.com/alireza0/x-ui/master/install.sh)
+                curl -Ls https://raw.githubusercontent.com/alireza0/x-ui/master/install.sh | bash 2>&1
             " 2>&1) || error_log+="خطا در نصب پنل علیرضا در سرور $server\n$result\n"
         
         elif [ "$panel_choice" == "2" ]; then
             echo
             echo "در حال نصب پنل صنایی در سرور $server"
             result=$(sshpass -p "$ssh_pass" ssh -o StrictHostKeyChecking=no $ssh_user@$server "
-                curl https://get.acme.sh | sh &&
-                ~/.acme.sh/acme.sh --set-default-ca --server letsencrypt &&
-                ~/.acme.sh/acme.sh --register-account -m $email &&
-                ~/.acme.sh/acme.sh --issue -d $server --standalone &&
-                ~/.acme.sh/acme.sh --installcert -d $server --key-file /root/private.key --fullchain-file /root/cert.crt &&
-                bash <(curl -Ls https://raw.githubusercontent.com/mhsanaei/3x-ui/master/install.sh) v2.3.13
+                curl -Ls https://raw.githubusercontent.com/mhsanaei/3x-ui/master/install.sh | bash 2>&1
             " 2>&1) || error_log+="خطا در نصب پنل صنایی در سرور $server\n$result\n"
         else
             echo
