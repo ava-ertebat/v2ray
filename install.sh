@@ -23,6 +23,79 @@ print_number() {
     echo -e "${color}${number}${RESET}"
 }
 
+# تابع نمایش لودینگ
+show_loading() {
+    local pid=$1
+    local delay=0.1
+    local spinner=( '|' '/' '-' '\' )
+
+    while [ -d /proc/$pid ]; do
+        for i in "${spinner[@]}"; do
+            echo -ne "\r$i"
+            sleep $delay
+        done
+    done
+    echo -ne "\r"
+}
+
+# تابع نصب پنل
+install_panel() {
+    local server="$1"
+    local panel_choice="$2"
+
+    if [ "$panel_choice" == "1" ]; then
+        echo
+        echo "در حال نصب پنل علیرضا در سرور $server"
+        sshpass -p "$ssh_pass" ssh -o StrictHostKeyChecking=no $ssh_user@$server "
+            curl -Ls https://raw.githubusercontent.com/alireza0/x-ui/master/install.sh | bash 2>&1
+        " & pid=$!
+        show_loading $pid || error_log+="خطا در نصب پنل علیرضا در سرور $server\n"
+    
+    elif [ "$panel_choice" == "2" ]; then
+        echo
+        echo "در حال نصب پنل صنایی در سرور $server"
+        sshpass -p "$ssh_pass" ssh -o StrictHostKeyChecking=no $ssh_user@$server "
+            curl -Ls https://raw.githubusercontent.com/mhsanaei/3x-ui/master/install.sh | bash 2>&1
+        " & pid=$!
+        show_loading $pid || error_log+="خطا در نصب پنل صنایی در سرور $server\n"
+    else
+        echo
+        echo "خطا در انتخاب پنل!"
+        exit 1
+    fi
+}
+
+# تابع دریافت اطلاعات کاربر
+get_user_input() {
+    read -p "نام کاربری سرور خود را به انگلیسی وارد کنید:(برای مثال root) " ssh_user
+    echo
+    read -s -p "رمز عبور سرور خود را وارد کنید:(برای مثال swordfish) " ssh_pass
+    echo
+    read -p "آدرس ایمیل خود را برای دریافت گواهی SSL وارد کنید:(برای مثال omid@akherati.ir) " email
+    echo
+    read -p "لیست دامنه یا دامنه‌های خود را وارد کنید (بعد از وارد کردن هر دامنه یک فاصله یا همان (space) قرار دهید): " servers
+    echo
+
+    echo "می‌خواهید چه کاری انجام دهم؟"
+    echo
+    echo "1) تمدید سریع SSL"
+    echo
+    echo "2) نصب V2Ray"
+    echo
+    read -p "یک عدد را وارد کنید (1 یا 2): " action
+    echo
+
+    if [ "$action" == "2" ]; then
+        echo
+        echo "کدام پنل را می‌خواهید نصب کنید؟"
+        echo
+        echo "1) پنل علیرضا"
+        echo
+        echo "2) پنل صنایی"
+        read -p "یک عدد را وارد کنید (1 یا 2): " panel_choice
+    fi
+}
+
 clear
 
 # خوشامدگویی
@@ -61,81 +134,56 @@ echo
 echo
 echo
 
-# دریافت ورودی‌های کاربر
-read -p "نام کاربری سرور خود را به انگلیسی وارد کنید:(برای مثال root) " ssh_user
-echo
-read -s -p "رمز عبور سرور خود را وارد کنید:(برای مثال swordfish) " ssh_pass
-echo
-read -p "آدرس ایمیل خود را برای دریافت گواهی SSL وارد کنید:(برای مثال omid@akherati.ir) " email
-echo
-read -p "لیست دامنه یا دامنه‌های خود را وارد کنید (بعد از وارد کردن هر دامنه یک فاصله یا همان (space) قرار دهید): " servers
-echo
-
-# انتخاب عملیات
-echo "می‌خواهید چه کاری انجام دهم؟"
-echo
-echo "1) تمدید سریع SSL"
-echo
-echo "2) نصب V2Ray"
-echo
-read -p "یک عدد را وارد کنید (1 یا 2): " action
-echo
-
-# اگر گزینه نصب V2Ray انتخاب شد، انتخاب پنل مورد نظر
-if [ "$action" == "2" ]; then
-    echo
-    echo "کدام پنل را می‌خواهید نصب کنید؟"
-    echo
-    echo "1) پنل علیرضا"
-    echo
-    echo "2) پنل صنایی"
-    read -p "یک عدد را وارد کنید (1 یا 2): " panel_choice
-fi
-
 # متغیر برای ذخیره خطاها
 error_log=""
 
-# اجرای عملیات انتخاب شده برای هر سرور
-for server in $servers
-do
-    if [ "$action" == "1" ]; then
-        echo
-        echo "تمدید SSL برای $server"
-        result=$(sshpass -p "$ssh_pass" ssh -o StrictHostKeyChecking=no $ssh_user@$server "
-            ~/.acme.sh/acme.sh --issue -d $server --standalone --force &&
-            ~/.acme.sh/acme.sh --installcert -d $server --key-file /root/private.key --fullchain-file /root/cert.crt
-        " 2>&1) || error_log+="خطا در تمدید SSL برای سرور $server\n$result\n"
-    
-    elif [ "$action" == "2" ]; then
-        if [ "$panel_choice" == "1" ]; then
+# دریافت ورودی‌های کاربر برای بار اول
+get_user_input
+
+while true; do
+    # اجرای عملیات انتخاب شده برای هر سرور
+    for server in $servers; do
+        if [ "$action" == "1" ]; then
             echo
-            echo "در حال نصب پنل علیرضا در سرور $server"
-            result=$(sshpass -p "$ssh_pass" ssh -o StrictHostKeyChecking=no $ssh_user@$server "
-                curl -Ls https://raw.githubusercontent.com/alireza0/x-ui/master/install.sh | bash 2>&1
-            " 2>&1) || error_log+="خطا در نصب پنل علیرضا در سرور $server\n$result\n"
+            echo "تمدید SSL برای $server"
+            sshpass -p "$ssh_pass" ssh -o StrictHostKeyChecking=no $ssh_user@$server "
+                ~/.acme.sh/acme.sh --issue -d $server --standalone --force &&
+                ~/.acme.sh/acme.sh --installcert -d $server --key-file /root/private.key --fullchain-file /root/cert.crt
+            " & pid=$!
+            show_loading $pid || error_log+="خطا در تمدید SSL برای سرور $server\n"
         
-        elif [ "$panel_choice" == "2" ]; then
-            echo
-            echo "در حال نصب پنل صنایی در سرور $server"
-            result=$(sshpass -p "$ssh_pass" ssh -o StrictHostKeyChecking=no $ssh_user@$server "
-                curl -Ls https://raw.githubusercontent.com/mhsanaei/3x-ui/master/install.sh | bash 2>&1
-            " 2>&1) || error_log+="خطا در نصب پنل صنایی در سرور $server\n$result\n"
+        elif [ "$action" == "2" ]; then
+            install_panel "$server" "$panel_choice"
         else
             echo
-            echo "خطا در انتخاب پنل!"
+            echo "درخواست شما معتبر نیست!"
             exit 1
         fi
+    done
+
+    # نمایش خطاها در پایان
+    if [ -n "$error_log" ]; then
+        echo -e "\nخطاهای دریافتی هنگام نصب پنل:"
+        echo -e "$error_log"
     else
-        echo
-        echo "درخواست شما معتبر نیست!"
-        exit 1
+        echo "نصب با موفقیت و بدون خطا انجام شد!"
+    fi
+
+    # سوال برای پیکربندی سرور دیگر
+    echo
+    read -p "آیا سرور دیگری برای پیکربندی وجود دارد؟ (بله/خیر): " more_servers
+    if [ "$more_servers" == "خیر" ]; then
+        echo "اسکریپت پایان یافت."
+        break
+    fi
+
+    # سوال در مورد تغییر نام کاربری و رمز عبور
+    echo
+    read -p "آیا نام کاربری و رمز عبور جدید دارید؟ (بله/خیر): " new_credentials
+    if [ "$new_credentials" == "بله" ]; then
+        get_user_input
+    else
+        read -p "آدرس سرور جدید را وارد کنید: " new_server
+        servers="$new_server"
     fi
 done
-
-# نمایش خطاها در پایان
-if [ -n "$error_log" ]; then
-    echo -e "\nخطاهای دریافتی هنگام نصب پنل:"
-    echo -e "$error_log"
-else
-    echo "نصب با موفقیت و بدون خطا انجام شد!"
-fi
