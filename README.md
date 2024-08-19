@@ -23,7 +23,7 @@ Automated Script for Installing and Configuring V2Ray on Multiple Servers
 ## نصب پیش نیاز ها
 
 ```sh
-apt update && apt install curl socat -y
+sudo apt update && apt install curl socat -y
 ```
 
 
